@@ -1,0 +1,9 @@
+# Ne jamais committer de fichiers sensibles
+*.env
+.env.*
+secrets.json
+**/secrets/**
+
+# Fichiers système
+.DS_Store
+Thumbs.db
