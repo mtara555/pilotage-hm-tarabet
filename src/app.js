@@ -263,7 +263,196 @@ window.setViewMode    = function(mode) {
   if(mode==='rayon'&&(window._currentFreq==='T'||window._currentFreq==='A')) window._currentFreq='ALL';
   if(mode==='rayon'){ renderSelectRayon(); }
   else { renderSidebar(); renderTaskView(); }
-};// ── Login UI ──────────────────────────────────────────────────
+};
+// ── Fonctions manquantes exposées globalement ─────────────────
+window.doLogin  = (un,pw)=>{ const u=document.getElementById('login-username'),p=document.getElementById('login-password'); doLogin(un||u?.value,pw||p?.value,onLoginSuccess,showLoginError); };
+window.doLogout = function(){doLogout();location.reload();};
+window.openChangePwModal = function(){ import('./users/index.js').then(m=>m.openChangePwModal&&m.openChangePwModal()); };
+window.resetUserPw = function(id){ import('./users/index.js').then(m=>m.resetUserPw&&m.resetUserPw(id)); };
+window.openUserModal = (id)=>openUserModal(id, getAllRoles);
+window.saveAndQuit = function(){ saveData(); saveCompanyData(); showToast('✅ Données sauvegardées','#27ae60'); setTimeout(()=>location.reload(),1000); };
+window.testFirebaseConnection = async function(){
+  const url=(document.getElementById('fb-projectUrl')||{}).value||'';
+  const key=(document.getElementById('fb-anonKey')||{}).value||'';
+  if(!url||!key){showFirebaseStatus('⚠️ URL et clé obligatoires','#e74c3c');return;}
+  try{ await initSupabase({projectUrl:url.trim(),anonKey:key.trim()}); showFirebaseStatus('✅ Connexion réussie','#3ecf8e'); }
+  catch(e){ showFirebaseStatus('❌ Erreur : '+e.message,'#e74c3c'); }
+};
+window.clearFirebaseConfig = function(){
+  localStorage.removeItem('hm_sb_cfg');
+  const u=document.getElementById('fb-projectUrl'), k=document.getElementById('fb-anonKey');
+  if(u) u.value=''; if(k) k.value='';
+  showFirebaseStatus('🗑️ Configuration effacée','#e74c3c');
+};
+window.toggleAddForm = function(){
+  const f=document.getElementById('add-form'); if(!f) return;
+  f.classList.toggle('open');
+  if(f.classList.contains('open')){
+    const sel=document.getElementById('nt-assignee');
+    if(sel){ sel.innerHTML='<option value="">-- Choisir un utilisateur --</option>'+usersData.filter(u=>u.active&&u.id!==currentUser?.id).map(u=>`<option value="${u.id}">${u.name}</option>`).join(''); }
+    document.getElementById('nt-input')?.focus();
+  }
+};
+window.closeAddForm = function(){
+  document.getElementById('add-form')?.classList.remove('open');
+  const ni=document.getElementById('nt-input'); if(ni) ni.value='';
+};
+window.saveCustomTask = function(){
+  const label=(document.getElementById('nt-input')?.value||'').trim(); if(!label){showToast('Libellé requis','#e74c3c');return;}
+  const freq=document.getElementById('nt-freq')?.value||'Q';
+  const assignedTo=document.getElementById('nt-assignee')?.value||null;
+  const id='c_'+Date.now();
+  let deadline='', note='';
+  if(freq==='Q'){ const m=document.querySelector('input[name="q-moment"]:checked')?.value||'MATIN'; deadline=m==='MATIN'?'12:00':'22:00'; note='⏰ '+m; }
+  const task={id,label,freq,note,deadline,jours:[],datesMois:[],assignedTo,createdBy:currentUser?.id,createdAt:new Date().toISOString()};
+  if(!customTasks[currentRoleId]) customTasks[currentRoleId]=[];
+  customTasks[currentRoleId].push(task);
+  saveData(); window.closeAddForm(); renderTaskView(); _renderDashboard();
+  showToast('✅ Tâche ajoutée','#27ae60');
+};
+window.delCustom = function(id){
+  if(!confirm('Supprimer cette tâche ?')) return;
+  if(customTasks[currentRoleId]) customTasks[currentRoleId]=customTasks[currentRoleId].filter(t=>t.id!==id);
+  saveData(); renderTaskView(); _renderDashboard();
+};
+window.editCustomTask = function(id){
+  const t=(customTasks[currentRoleId]||[]).find(x=>x.id===id); if(!t) return;
+  document.getElementById('modal-title').textContent='✏️ Modifier la tâche';
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">LIBELLÉ</label>
+        <input id="edit-task-label" type="text" value="${t.label.replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">DEADLINE</label>
+        <input id="edit-task-deadline" type="time" value="${t.deadline||''}" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;"></div>
+    </div>`;
+  window._modalSaveCallback=function(){
+    const label=document.getElementById('edit-task-label').value.trim();
+    if(!label){showToast('Libellé requis','#e74c3c');return;}
+    const idx=(customTasks[currentRoleId]||[]).findIndex(x=>x.id===id);
+    if(idx>-1){ customTasks[currentRoleId][idx]={...t,label,deadline:document.getElementById('edit-task-deadline').value||''}; }
+    saveData(); window.closeModal(); renderTaskView();
+    showToast('✅ Tâche mise à jour','#27ae60');
+  };
+  document.getElementById('modal-overlay')?.classList.add('open');
+};
+window.handleNotifBtnClick = requestNotifPermission;
+window.openAddDeptModal = function(editId){
+  showToast('🚧 Gestion des départements — bientôt disponible','#f39c12');
+};
+window.openRayonModal = function(editId){
+  showToast('🚧 Gestion des rayons — bientôt disponible','#f39c12');
+};
+window.openLivePanel = function(){
+  showToast('📡 Panel live — bientôt disponible','#2980b9');
+};
+window.showPreview = function(){
+  const dateFrom=document.getElementById('exp-date')?.value||document.getElementById('date-from')?.value;
+  if(!dateFrom){showToast('Sélectionnez une date','#e74c3c');return;}
+  const html=generateReportHTML(dateFrom,null,null);
+  const w=window.open('','_blank'); if(w){w.document.write(html);w.document.close();}
+};
+window.closePreview = function(){ };
+window.printReport = function(){
+  const dateFrom=document.getElementById('exp-date')?.value||document.getElementById('date-from')?.value;
+  if(!dateFrom){showToast('Sélectionnez une date','#e74c3c');return;}
+  window.showPreview();
+};
+window.downloadPDF = function(){
+  const dateFrom=document.getElementById('exp-date')?.value||document.getElementById('date-from')?.value;
+  if(!dateFrom){showToast('Sélectionnez une date','#e74c3c');return;}
+  exportPDF(dateFrom,null,null);
+};
+window.toggleCard = function(id){
+  const el=document.getElementById('card-'+id); if(el) el.classList.toggle('collapsed');
+};
+window.renderTaskMgmt = function(){
+  const sel=document.getElementById('task-mgmt-role'); if(!sel) return;
+  const rid=sel.value; if(!rid) return;
+  const r=getRole(rid); if(!r) return;
+  const tasks=getAllTasks(rid);
+  const list=document.getElementById('task-mgmt-list'); if(!list) return;
+  if(!tasks.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px;">Aucune tâche.</div>';return;}
+  list.innerHTML=tasks.map(t=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;border-left:3px solid ${FC[t.freq]||'#ccc'};">
+      <span style="flex:1;font-size:12px;">${t.label}</span>
+      <span style="font-size:10px;padding:2px 6px;border-radius:5px;background:${FC[t.freq]}18;color:${FC[t.freq]}">${FL[t.freq]}</span>
+      <button onclick="window.toggleHideTask('${rid}','${t.id}')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:${(taskOverrides[rid]||{})[t.id]?.hidden?'#fdecea':'#eafaf1'};color:${(taskOverrides[rid]||{})[t.id]?.hidden?'#e74c3c':'#27ae60'}">
+        ${(taskOverrides[rid]||{})[t.id]?.hidden?'👁️ Afficher':'🙈 Masquer'}
+      </button>
+    </div>`).join('');
+  const taskMgmtRoleSelect=document.getElementById('task-mgmt-role');
+  if(taskMgmtRoleSelect&&!taskMgmtRoleSelect.options.length){
+    getAllRoles().forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.icon+' '+r.label;taskMgmtRoleSelect.appendChild(o);});
+  }
+};
+window.toggleHideTask = function(rid, tid){
+  if(!taskOverrides[rid]) taskOverrides[rid]={};
+  if(!taskOverrides[rid][tid]) taskOverrides[rid][tid]={};
+  taskOverrides[rid][tid].hidden=!taskOverrides[rid][tid].hidden;
+  saveData(); window.renderTaskMgmt(); renderTaskView(); _renderDashboard();
+};
+window.delTaskFromSettings = function(rid, tid){
+  if(!confirm('Supprimer cette tâche ?')) return;
+  if(customTasks[rid]) customTasks[rid]=customTasks[rid].filter(t=>t.id!==tid);
+  saveData(); window.renderTaskMgmt();
+};
+window.filterLibCat = function(cat){ window._libCat=cat; window.renderLibraryList&&window.renderLibraryList(); };
+window.filterLibFreq = function(freq){ window._libFreq=freq; window.renderLibraryList&&window.renderLibraryList(); };
+window.saveCustomTaskFromLib = function(){ showToast('Sélectionnez une tâche dans la bibliothèque','#f39c12'); };
+window.toggleTaskRayon = function(tid, freq){
+  const k=`hm_rayon_${rayonActif}_${tid}_${freq}`;
+  localStorage.setItem(k,!(localStorage.getItem(k)==='true'));
+  const rayon=customRayons[rayonActif]; if(rayon) window._renderTasksRayon&&window._renderTasksRayon(rayon);
+};
+window.openEditModal = function(rid, tid, isCustom){
+  const t=getAllTasks(rid).find(x=>x.id===tid); if(!t) return;
+  document.getElementById('modal-title').textContent='✏️ Modifier la tâche';
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">LIBELLÉ</label>
+        <input id="edit-task-label" type="text" value="${t.label.replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">NOTE</label>
+        <input id="edit-task-note" type="text" value="${(t.note||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;"></div>
+    </div>`;
+  window._modalSaveCallback=function(){
+    const label=document.getElementById('edit-task-label').value.trim();
+    if(!label){showToast('Libellé requis','#e74c3c');return;}
+    if(!taskOverrides[rid]) taskOverrides[rid]={};
+    if(!taskOverrides[rid][tid]) taskOverrides[rid][tid]={};
+    taskOverrides[rid][tid].label=label;
+    taskOverrides[rid][tid].note=document.getElementById('edit-task-note').value.trim();
+    saveData(); window.closeModal(); window.renderTaskMgmt(); renderTaskView();
+    showToast('✅ Tâche mise à jour','#27ae60');
+  };
+  document.getElementById('modal-overlay')?.classList.add('open');
+};
+window.importDataJSON = function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.users) localStorage.setItem('hm_users',JSON.stringify(data.users));
+      if(data.completions) localStorage.setItem('hm_comp',JSON.stringify(data.completions));
+      if(data.customTasks) localStorage.setItem('hm_cust',JSON.stringify(data.customTasks));
+      if(data.taskOverrides) localStorage.setItem('hm_overrides',JSON.stringify(data.taskOverrides));
+      if(data.company) localStorage.setItem('hm_company',JSON.stringify(data.company));
+      if(data.rayons) localStorage.setItem('hm_rayons',JSON.stringify(data.rayons));
+      if(data.customRoles) localStorage.setItem('hm_custom_roles',JSON.stringify(data.customRoles));
+      showToast('✅ Données importées — rechargement...','#27ae60');
+      setTimeout(()=>location.reload(),1200);
+    } catch(err){ showToast('❌ Fichier invalide','#e74c3c'); }
+  };
+  reader.readAsText(file);
+};
+
+// Initialiser le select de gestion des tâches
+function initTaskMgmtSelect(){
+  const sel=document.getElementById('task-mgmt-role'); if(!sel||sel.options.length>1) return;
+  getAllRoles().forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.icon+' '+r.label;sel.appendChild(o);});
+}
+
+// ── Login UI ──────────────────────────────────────────────────
 function showLoginError(msg) {
   const el=document.getElementById('login-error');
   if(el){el.textContent=msg;el.style.display='block';}
