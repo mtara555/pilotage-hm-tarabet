@@ -808,7 +808,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px;}
   <div class="settings-card" id="users-mgmt-card">
     <h3>🔐 Gestion des Utilisateurs</h3>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Gérez les comptes et définissez les fonctions accessibles à chaque responsable.</div>
-    <div class="users-list" id="users-list"></div>
+    <button class="btn-primary" onclick="window.openEditUserModal(null)" 
+  style="margin-bottom:14px;width:100%;">
+  ➕ Nouvel utilisateur
+</button>
+<div class="users-list" id="users-list"></div>
   </div>
 
   <!-- Gestion tâches -->
