@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test Supabase Auth</title></head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<pre id="log"></pre>
+<script>
+function log(msg) { document.getElementById('log').textContent += msg + '\n'; }
+
+async function test() {
+  const URL = 'https://qpszmqkbhrqlycgdkgop.supabase.co';
+  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwc3ptcWtiaHJxbHljZ2RrZ29wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1Mzc1NTgsImV4cCI6MjA5ODExMzU1OH0.DmqNLDJVeI1fep_4tKJU_fTyE356EoZ5eLVjpUi2t7A';
+  
+  const client = supabase.createClient(URL, KEY, {
+    auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
+  });
+
+  log('1. Test connexion hm_app_data...');
+  const { data: d1, error: e1 } = await client.from('hm_app_data').select('key').limit(1);
+  log(e1 ? '❌ ' + e1.message + ' (code: ' + e1.code + ')' : '✅ hm_app_data accessible');
+
+  log('\n2. Test hm_profiles...');
+  const { data: d2, error: e2 } = await client.from('hm_profiles').select('*').limit(1);
+  log(e2 ? '❌ ' + e2.message + ' (code: ' + e2.code + ')' : '✅ hm_profiles: ' + JSON.stringify(d2));
+
+  log('\n3. Test login admin@hm-tarabet.local / 1234...');
+  const { data: d3, error: e3 } = await client.auth.signInWithPassword({
+    email: 'admin@hm-tarabet.local', password: '1234'
+  });
+  if(e3) {
+    log('❌ Login échoué: ' + e3.message);
+  } else {
+    log('✅ Login OK — UID: ' + d3.user.id);
+    log('\n4. Test hm_profiles après login...');
+    const { data: d4, error: e4 } = await client.from('hm_profiles').select('*').eq('id', d3.user.id).maybeSingle();
+    log(e4 ? '❌ ' + e4.message : '✅ Profil: ' + JSON.stringify(d4));
+  }
+}
+test();
+</script>
+</body>
+</html>
