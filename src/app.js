@@ -117,7 +117,7 @@ function isTaskHidden(rid, tid) { return !!(taskOverrides[rid]||{})[tid]?.hidden
 // Exposer globalement
 window._getAllRoles = getAllRoles;
 window._getAllTasks = getAllTasks;
-window._getRole    = getRole;
+window._getUsersData = () => usersData;
 
 // ── Toast ─────────────────────────────────────────────────────
 export function showToast(msg, color='#1a1f2e') {
