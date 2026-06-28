@@ -19,7 +19,6 @@ jobs:
         run: |
           sed -i "s|%%SUPABASE_URL%%|${{ secrets.SUPABASE_URL }}|g" src/services/supabase.js
           sed -i "s|%%SUPABASE_ANON_KEY%%|${{ secrets.SUPABASE_ANON_KEY }}|g" src/services/supabase.js
-          sed -i "s|%%APP_SECRET%%|${{ secrets.APP_SECRET }}|g" src/services/supabase.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
