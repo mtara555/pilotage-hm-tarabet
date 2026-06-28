@@ -146,7 +146,7 @@ export function permanenceTodayBannerHtml(getRoleStats) {
 
 export function renderPermanencePlanning() {
   const el=document.getElementById('permanence-planning-table'); if(!el) return;
-  const users=usersData.filter(u=>u.active);
+  const users=(window._getUsersData ? window._getUsersData() : usersData).filter(u=>u.active);
   const userOptions=(selected)=>
     `<option value="">— Non assigné —</option>`+
     users.map(u=>`<option value="${u.id}"${u.id===selected?' selected':''}>${u.name}</option>`).join('');
