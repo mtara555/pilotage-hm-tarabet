@@ -366,7 +366,7 @@ async function loadDataFromSupabase(uid) {
 
 function applyAccessControl() {
   const isDir=isDirecteur();
-  ['users-mgmt-card','data-mgmt-card'].forEach(id=>{
+  ['users-mgmt-card','data-mgmt-card','permanence-planning-card'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display=isDir?'block':'none';
   });
   const liveWrap=document.getElementById('hdr-live-btn-wrap');
