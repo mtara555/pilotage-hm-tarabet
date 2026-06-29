@@ -593,14 +593,13 @@ function loadLocalData() {
   try{setUsersData(JSON.parse(localStorage.getItem('hm_users')||'[]'));}catch(e){}
   try{setCustomRayons(JSON.parse(localStorage.getItem('hm_rayons')||'{}')||{});}catch(e){}
   try{setPermanencePlanning(JSON.parse(localStorage.getItem('hm_permanence_planning')||'{}')||{});}catch(e){}
-  const existingAdmin=usersData.find(u=>u.username==='admin');
-  if(!existingAdmin){
-    const adminDef={id:'u_admin',name:'Directeur',username:'admin',
-      passwordHash:hashStr('1234'),systemRole:'directeur',ownRoleId:null,
-      evaluableRoleIds:getAllRoles().map(r=>r.id),active:true,
-      createdAt:new Date().toISOString()};
-    usersData.length?usersData.unshift(adminDef):setUsersData([adminDef]);
-    try{saveUsers();}catch(e){}
+  // Avec Supabase Auth natif, les profils viennent de hm_profiles
+  // Ne pas créer d'admin local — évite les doublons
+  // Nettoyer les anciens admins locaux (id: u_admin)
+  const filteredUsers = usersData.filter(u => u.id !== 'u_admin');
+  if(filteredUsers.length !== usersData.length) {
+    setUsersData(filteredUsers);
+    try { localStorage.setItem('hm_users', JSON.stringify(filteredUsers)); } catch(e) {}
   }
 }
 
@@ -615,10 +614,7 @@ async function initFirebaseOnStartup() {
   const fallback=setTimeout(()=>{setLoginReady(true);start();},8000);
   try {
     await initSupabase(cfg); clearTimeout(fallback); setLoginReady(true);
-    const sbUsers=await _sb.get('hm_app_data','hm_users').catch(()=>null);
-    if(sbUsers&&Array.isArray(sbUsers)&&sbUsers.length>0){
-      setUsersData(sbUsers); localStorage.setItem('hm_users',JSON.stringify(sbUsers));
-    }
+    // Users chargés depuis hm_profiles après login — pas au startup
     start();
   } catch(e) { clearTimeout(fallback); setLoginReady(true); start(); }
 }
