@@ -16,7 +16,7 @@ import { renderTasks, renderRoleHeader, renderProgressBar,
 import { renderDashboard, getRoleStats, getSecteurStats, getGlobalStats } from './dashboard/index.js';
 import { renderUsersList, toggleUserActive, deleteUser,
          openUserModal, saveUserFromModal, resetUserPw,
-         onSysRoleChange, setAllEvalChk, setEvalChkBySysRole } from './users/index.js';
+         onSysRoleChange, setAllEvalChk, openChangePwModal } from './users/index.js';
 import { companyData, customRoles, customRayons,
          setCompanyData, setCustomRoles, setCustomRayons,
          saveCompanyData, saveRayons, saveCustomRoles,
@@ -267,8 +267,8 @@ window.setViewMode    = function(mode) {
 // ── Fonctions manquantes exposées globalement ─────────────────
 window.doLogin  = (un,pw)=>{ const u=document.getElementById('login-username'),p=document.getElementById('login-password'); doLogin(un||u?.value,pw||p?.value,onLoginSuccess,showLoginError); };
 window.doLogout = function(){doLogout();location.reload();};
-window.openChangePwModal = function(){ import('./users/index.js').then(m=>m.openChangePwModal&&m.openChangePwModal()); };
-window.resetUserPw = function(id){ import('./users/index.js').then(m=>m.resetUserPw&&m.resetUserPw(id)); };
+window.openChangePwModal = ()=>openChangePwModal();
+window.resetUserPw = (id)=>resetUserPw(id);
 window.openUserModal = (id)=>openUserModal(id, getAllRoles);
 window.saveAndQuit = function(){ saveData(); saveCompanyData(); showToast('✅ Données sauvegardées','#27ae60'); setTimeout(()=>location.reload(),1000); };
 window.testFirebaseConnection = async function(){
