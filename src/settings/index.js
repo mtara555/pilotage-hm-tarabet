@@ -187,3 +187,8 @@ export function confirmReset() {
   window.showToast&&window.showToast('✅ Données réinitialisées — rechargement...','#27ae60');
   setTimeout(()=>location.reload(),1500);
 }
+
+
+// ── Constantes pour modals Département/Rayon ─────────────────
+export const DEPT_ICONS = ['🏢','🏪','🛒','📦','🔧','🧹','🍕','🥩','🍞','🧴','💊','👗','👟','📱','🖥️','🚗','🌿','🐟','🧃','🍷'];
+export const DEPT_COLORS = ['#1a6b3c','#2980b9','#d35400','#8e44ad','#c0392b','#27ae60','#e67e22','#16a085','#2c3e50','#7f8c8d'];
