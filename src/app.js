@@ -24,6 +24,8 @@ import { companyData, customRoles, customRayons,
          renderRayonsList, renderSelectRayon, renderFirebaseConfigForm,
          showFirebaseStatus, saveFirebaseConfig, renderCustomRolesList,
          handleLogoUpload, removeLogo, exportDataJSON, confirmReset } from './settings/index.js';
+import { openAddDeptModal, deleteCustomRoleConfirm,
+         openRayonModal, deleteRayonConfirm } from './settings/modals.js';
 import { setupRealtimeListeners, startSupabasePoll,
          pushTaskEventToAdmin, _eventsCache } from './realtime/index.js';
 import { renderExportScope, toggleScope,
@@ -147,6 +149,7 @@ export function showView(v) {
 }
 window.showView = showView;
 
+window._renderDashboard = ()=>_renderDashboard();
 function _renderDashboard() {
   const bannerEl=document.getElementById('dash-perm-banner');
   if(bannerEl) bannerEl.innerHTML=permanenceTodayBannerHtml(
@@ -156,6 +159,7 @@ function _renderDashboard() {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────
+window._renderSidebar = ()=>renderSidebar();
 function renderSidebar() {
   const sb=document.getElementById('sidebar'); if(!sb) return;
   const accessible=getAccessibleRoles(getAllRoles);
@@ -241,8 +245,8 @@ window.toggleUserActive   = toggleUserActive;
 window.deleteUser         = deleteUser;
 window.onSysRoleChange    = onSysRoleChange;
 window.setAllEvalChk      = setAllEvalChk;
-window.deleteCustomRole   = function(id){ const idx=customRoles.findIndex(r=>r.id===id); if(idx>-1) customRoles.splice(idx,1); saveCustomRoles(); renderCustomRolesList(); renderSidebar(); _renderDashboard(); };
-window.deleteRayon        = function(id){ delete customRayons[id]; saveRayons(); renderRayonsList(); renderSelectRayon(); };
+window.deleteCustomRole   = deleteCustomRoleConfirm;
+window.deleteRayon        = deleteRayonConfirm;
 window.requestNotifPermission = requestNotifPermission;
 window.savePermanenceOutgoingNote = function(rid){ savePermanenceOutgoingNote(rid); showToast('📝 Note enregistrée','#27ae60'); };
 window.savePermanencePlanningForm = function(){ savePermanencePlanningForm(()=>{ _renderDashboard(); showToast('✅ Planning enregistré','#27ae60'); }); };
@@ -336,12 +340,8 @@ window.editCustomTask = function(id){
   document.getElementById('modal-overlay')?.classList.add('open');
 };
 window.handleNotifBtnClick = requestNotifPermission;
-window.openAddDeptModal = function(editId){
-  showToast('🚧 Gestion des départements — bientôt disponible','#f39c12');
-};
-window.openRayonModal = function(editId){
-  showToast('🚧 Gestion des rayons — bientôt disponible','#f39c12');
-};
+window.openAddDeptModal = openAddDeptModal;
+window.openRayonModal = openRayonModal;
 window.openLivePanel = function(){
   showToast('📡 Panel live — bientôt disponible','#2980b9');
 };
